@@ -68,7 +68,7 @@ var touchify = function(touchTarget, o) {
 				}
 			}, moveFrequency);
 			// Bind touch events
-			$el.addClass(touchClass)
+			touchTarget.addClass(touchClass)
 				.bind(touchevent.move, onTouchMove)
 				.bind(touchevent.end, onTouchEnd)
 				.bind(touchevent.cancel, onTouchCancel);
@@ -105,8 +105,8 @@ var touchify = function(touchTarget, o) {
 			clearTouch();
 		};
 	return (function() {
-		$el.bind(touchevent.start, onTouchStart);
-		return $el;
+		touchTarget.bind(touchevent.start, onTouchStart);
+		return touchTarget;
 	})();
 };
 
