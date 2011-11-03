@@ -1,23 +1,28 @@
-//     touchMe
+//     Touchify
 //     (c) 2011 Jason Byrne, MileSplit
 //     Some code derived from code by Thomas Fuchs (2010, 2011) for Zepto.js
 //     May be freely distributed under the MIT license.
 
 
-var touchMe = function($el, o) {
+var touchify = function(touchTarget, o) {
 	// Events thrown: grab, hold, longpress, release, flick, tap, doubletap
 	var start = { x:null, y:null, t:null },
 		delta = { x:0, y:0, t:0 },
-		last = { x:null, y:null, t:null }, lastHold = 0,
-		touchTarget = $el, touchTimer=null,
+		last = { x:null, y:null, t:null }, lastHold = 0, touchTimer=null,
 		touchEnabled = (typeof window.ontouchstart != 'undefined'),
 		threshold = { move:5, tap:300, longpress:750, swipeTime:2000, swipeDistance:20, doubleTapTime:250 },
 		touchClass = 'touched', touchType = 'changedTouches', touchX = 'screenX', touchY = 'screenY',
 		touchevent = touchEnabled ?
 			{ start:'touchstart', move:'touchmove', end:'touchend', cancel:'touchcancel' } :
 			{ start:'mousedown', move:'mousemove', end:'mouseup', cancel:'mouseout' },
-		triggers = { tap:'tap', doubletap:'doubletap', swipe:'flick', release:'release', drag:'grab', hold:'hold', longpress:'longpress'  },
+		triggers = { tap:'tap', doubletap:'doubletap', swipe:'flick', release:'release', drag:'grab', hold:'hold', longpress:'longpress' },
 		point = function(e) { return (touchEnabled) ? e[touchType][0] : e; },
+		trigger = function(type, o) {
+			o = o || {};
+			o.delta = delta;
+			o.start = start;
+			touchTarget.trigger(type, o);
+		},
 		slideDirection = function(abs){
 			if (abs.x >= abs.y) {
 				return (delta.x > 0 ? 'left' : 'right');
@@ -37,7 +42,7 @@ var touchMe = function($el, o) {
 				.unbind(touchevent.end, onTouchEnd)
 				.unbind(touchevent.cancel, onTouchCancel);
 			if (!initial) {
-				touchTarget.trigger(triggers.release);
+				trigger(triggers.release);
 			}
 		},
 		onTouchStart = function(e) {
@@ -51,17 +56,15 @@ var touchMe = function($el, o) {
 					if (Math.abs(delta.x) < threshold.move && Math.abs(delta.y) < threshold.move) {
 						if (delta.t >= threshold.longpress) {
 							if (lastHold == 0) {
-								touchTarget.trigger(triggers.longpress, e);
+								trigger(triggers.longpress);
 							}
 							if (delta.t - lastHold >= threshold.longpress) {
-								touchTarget.trigger(triggers.hold, e);
+								trigger(triggers.hold);
 								lastHold = delta.t;
 							}
 						}
 					} else {
-						touchTarget.trigger(triggers.drag, {
-							delta:delta
-						});
+						trigger(triggers.drag);
 					}
 				} else {
 					clearTouch();
@@ -90,14 +93,12 @@ var touchMe = function($el, o) {
 				delta.t = (new Date).getTime() - start.t;
 				if (abs.y < threshold.move && abs.x < threshold.move) {
 					if (start.t - last.t < threshold.doubleTapTime) {
-						touchTarget.trigger(triggers.doubletap, e);
+						trigger(triggers.doubletap);
 					} else {
-						touchTarget.trigger(triggers.tap, e);
+						trigger(triggers.tap);
 					}
 				} else if ((abs.x >= threshold.swipeDistance || abs.y >= threshold.swipeDistance) && delta.t <= threshold.swipeTime) {
-					touchTarget.trigger(triggers.swipe, {
-						direction:slideDirection(abs)
-					});
+					trigger(triggers.swipe, { direction:slideDirection(abs)	});
 				}
 				last = { x:start.x, y:start.y, t:start.t };
 			}
@@ -112,8 +113,8 @@ var touchMe = function($el, o) {
 	})();
 };
 
-$.fn.touchMe = function(o) {
+$.fn.touchify = function(o) {
 	return this.each(function(){
-		touchMe($(this), o);
+		touchify($(this), o);
 	});
 };
