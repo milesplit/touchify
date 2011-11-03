@@ -8,9 +8,9 @@ var touchify = function(touchTarget, o) {
 	// Events thrown: grab, hold, longpress, release, flick, tap, doubletap
 	var start = { x:null, y:null, t:null },
 		delta = { x:0, y:0, t:0 },
-		last = { x:null, y:null, t:null }, lastHold = 0, touchTimer=null,
+		last = { x:null, y:null, t:null }, lastHold = 0, touchTimer=null, moveFrequency=60,
 		touchEnabled = (typeof window.ontouchstart != 'undefined'),
-		threshold = { move:5, tap:300, longpress:750, swipeTime:2000, swipeDistance:20, doubleTapTime:250 },
+		threshold = { move:5, longpress:750, swipeTime:2000, swipeDistance:20, doubleTapTime:250 },
 		touchClass = 'touched', touchType = 'changedTouches', touchX = 'screenX', touchY = 'screenY',
 		touchevent = touchEnabled ?
 			{ start:'touchstart', move:'touchmove', end:'touchend', cancel:'touchcancel' } :
@@ -24,19 +24,16 @@ var touchify = function(touchTarget, o) {
 			touchTarget.trigger(type, o);
 		},
 		slideDirection = function(abs){
-			if (abs.x >= abs.y) {
-				return (delta.x > 0 ? 'left' : 'right');
-			} else {
-				return (delta.y > 0 ? 'up' : 'down');
-			}
+			if (abs.x >= abs.y) { return (delta.x > 0 ? 'left' : 'right'); }
+			else { return (delta.y > 0 ? 'up' : 'down'); }
 		},
 		clearTouch = function(initial) {
+			// Reset all data
 			start = { x:null, y:null, t:null };
 			delta = { x:0, y:0, t:0 };
 			clearInterval(touchTimer);
 			touchTimer = null;
 			lastHold = 0;
-			// Bind touch events
 			touchTarget.removeClass(touchClass)
 				.unbind(touchevent.move, onTouchMove)
 				.unbind(touchevent.end, onTouchEnd)
@@ -49,7 +46,7 @@ var touchify = function(touchTarget, o) {
 			var p = point(e);
 			clearTouch(true);
 			start = { x:p[touchX], y:p[touchY], t:(new Date).getTime() };
-			// Touch Timer
+			// Touch Timer: checks for longpress/hold and minimizes how often move events are thrown
 			touchTimer = setInterval(function() {
 				if (start.t != null) {
 					delta.t = (new Date).getTime() - start.t;
@@ -69,7 +66,7 @@ var touchify = function(touchTarget, o) {
 				} else {
 					clearTouch();
 				}
-			}, 60);
+			}, moveFrequency);
 			// Bind touch events
 			$el.addClass(touchClass)
 				.bind(touchevent.move, onTouchMove)
